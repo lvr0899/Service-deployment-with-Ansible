@@ -1,0 +1,22 @@
+global
+    daemon
+    maxconn 256
+
+defaults
+    mode http
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+
+listen firstbalance
+        bind *:80
+        mode http
+        stats enable
+        stats uri /haproxy?stats
+        balance roundrobin
+        option httpclose
+        option forwardfor
+{% for host in groups["webservers"] %}
+        server {{ host }} {{ hostvars[host]["ansible_default_ipv4"]["address"] }}:80
+{% endfor %}  
