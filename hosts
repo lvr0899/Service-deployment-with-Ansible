@@ -1,0 +1,16 @@
+[haproxy] 
+devhaproxy 
+
+[webservers] 
+devA 
+devB 
+devC
+
+[snmpd]
+devA
+devB
+devC
+
+[all:vars] 
+ansible_user=ubuntu 
+##REMOVED sshkey entry, handled by external SSH config file ##
