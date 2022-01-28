@@ -1,0 +1,160 @@
+---
+
+- hosts: webservers
+  become: yes
+  tasks:
+
+  - name: Installing nginx web server on devA, B & C
+    apt:
+      name: nginx
+      state: present
+      update_cache: true
+
+  - name: Setting up Nginx
+    template:
+       src: "./default"
+       dest: "/etc/nginx/sites-available/default1"
+
+  - name: restart nginx
+    service:
+       name: nginx
+       state: restarted
+    become: yes
+
+
+  - name: Installing php7.4-fpm on devA, B & C
+    apt:
+      name: php7.4-fpm
+      state: present
+      update_cache: true
+
+  - name: start php7.4-fpm
+    service:
+       name: php7.4-fpm
+       state: started
+    become: yes
+
+  - name: Setting Up index.php
+    template:
+      src: "./index.php"
+      dest: "/var/www/html/index.php"
+
+  - name: restart php7.4-fpm
+    service:
+       name: php7.4-fpm
+       state: restarted
+    become: yes
+
+  - name: install snmp
+    apt:
+      name: snmp
+      state: present
+
+  - name: install snmpd
+    apt:
+      name: snmpd
+      state: present
+
+  - name: put the right snmpd.conf file
+    template: 
+      src="./snmpd.conf"
+      dest="/etc/snmp/snmpd.conf"
+
+  - name: restart snmpd
+    service:
+       name: snmpd
+       state: restarted
+    become: yes
+
+- hosts: all
+  gather_facts: yes
+  
+- hosts: haproxy
+  become: yes  
+  tasks:   
+    - name: Installing load balancer
+      apt:
+        name: haproxy
+        state: present
+
+    - name: Pushes configuration
+      template:
+        src: "./haproxy.cfg.j2"
+        dest: "/etc/haproxy/haproxy.cfg"
+
+    - name: restart haproxy
+      service:
+         name: haproxy
+         state: restarted
+      become: yes
+
+    - name: Installing nginx devhaproxy
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Setting up nginx.conf 
+      template:
+       src: "./Nginx.conf"
+       dest: "/etc/nginx/nginx.conf"
+
+    - name: Setting up nginx1161.conf 
+      template:
+       src: "./Nginx1161.conf"
+       dest: "/etc/nginx/sites-available/default"
+    
+    - name: Restart Nginx
+      service:
+         name: nginx
+         state: restarted
+      become: yes
+    
+    - name: install snmp
+      apt:
+        name: snmp
+        state: present
+
+- hosts: haproxy  
+  become: yes  
+  tasks:
+
+    - name: haproxy redumentary test 1
+      uri:
+        url: "http://localhost/"
+        return_content: yes
+      register: html_body
+    - debug: msg='{{ html_body.content }}'
+
+    - name: haproxy redumentary test 2
+      uri:
+        url: "http://localhost/"
+        return_content: yes
+      register: html_body
+    - debug: msg='{{ html_body.content }}'
+
+    - name: haproxy redumentary test 3
+      uri:
+        url: "http://localhost/"
+        return_content: yes
+      register: html_body
+    - debug: msg='{{ html_body.content }}'
+
+
+
+    - name: snmpwalk request 1
+      shell: "snmpwalk -t 1 -r 1 -v2c -c public localhost:1161"
+      register: html_body
+    - debug: msg='{{ html_body.stdout_lines }}'
+
+    - name: snmpwalk request 2
+      shell: "snmpwalk -t 1 -r 1 -v2c -c public localhost:1161"
+      register: html_body
+    - debug: msg='{{ html_body.stdout_lines }}'
+
+    - name: snmpwalk request 3
+      shell: "snmpwalk -t 1 -r 1 -v2c -c public localhost:1161"
+      register: html_body
+    - debug: msg='{{ html_body.stdout_lines }}'
+
+
